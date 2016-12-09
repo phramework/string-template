@@ -26,28 +26,54 @@ class StringTemplate
     }
 
     /**
+     * @param string     $key
+     * @param \stdClass $attributes
+     * @return $this
+     * @since 0.1.0
+     */
+    public function add(
+        string $key,
+        \stdClass $attributes
+    ) {
+        $this->dictionary[$key] = static::convertToArray(
+            $attributes
+        );
+
+        return $this;
+    }
+
+    /**
      * @param string         $key
-     * @param \stdClass $resource JSON API resource
+     * @param \stdClass      $resource JSON API resource
      * @param \stdClass|null $additional
      * @return $this
+     * @todo define JSON API resource structure
      */
     public function addResource(
         string $key,
-        $resource,
+        \stdClass $resource,
         \stdClass $additional = null
     ) {
-        $object = clone $resource->attributes;
-        $object->id = $resource->id;
+        $object = new \stdClass;
+
+        //Safe, if attributes exist, base object on resource's attributes
+        if (property_exists($resource, 'attributes')) {
+            $object = clone $resource->attributes;
+        }
+
+        //Safely, inject id if exists
+        if (property_exists($resource, 'id')) {
+            $object->id = $resource->id;
+        }
 
         if ($additional !== null) {
+            //Inject additional attributes
             foreach ($additional as $k => $v) {
                 $object->{$k} = $v;
             }
         }
 
-        $this->dictionary[$key] = static::convertToArray($object);
-
-        return $this;
+        return $this->add($key, $object);
     }
 
     /**
